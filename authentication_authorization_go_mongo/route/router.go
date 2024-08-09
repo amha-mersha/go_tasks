@@ -5,8 +5,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/amha-mersha/go_taskmanager_mongo/controllers"
-	"github.com/amha-mersha/go_taskmanager_mongo/data"
+	"github.com/amha-mersha/go_tasks/authentication_authorization_go_mongo/controllers"
+	"github.com/amha-mersha/go_tasks/authentication_authorization_go_mongo/data"
 	"github.com/gin-gonic/gin"
 )
 

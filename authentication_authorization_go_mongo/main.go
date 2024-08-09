@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/amha-mersha/go_taskmanager_mongo/route"
+	"github.com/amha-mersha/go_tasks/authentication_authorization_go_mongo/route"
 	"github.com/joho/godotenv"
 )
 
