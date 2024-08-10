@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/amha-mersha/go_taskmanager_mongo/data"
-	"github.com/amha-mersha/go_taskmanager_mongo/models"
+	"github.com/amha-mersha/go_tasks/authentication_authorization_go_mongo/data"
+	"github.com/amha-mersha/go_tasks/authentication_authorization_go_mongo/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
@@ -89,4 +89,56 @@ func PostTask(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusAccepted, result)
+}
+
+func PostUserRegister(ctx *gin.Context) {
+	var newUser models.User
+	if err := ctx.ShouldBindJSON(&newUser); err != nil {
+		switch e := err.(type) {
+		case *json.SyntaxError:
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MalformedJSON})
+		case *json.UnmarshalTypeError:
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MismatchedFormat})
+		case validator.ValidationErrors:
+			missingRequireds := []string{}
+			for _, fieldError := range e {
+				missingRequireds = append(missingRequireds, fieldError.Error())
+			}
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MissingRequireds, "Missing": missingRequireds})
+		}
+		return
+	}
+	err := data.PostUserRegister(newUser)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusCreated, gin.H{"Server": "User registered successfully"})
+}
+
+func PostUserLogin(ctx *gin.Context) {
+	var logingUser models.User
+	if err := ctx.ShouldBindJSON(&logingUser); err != nil {
+		switch e := err.(type) {
+		case *json.SyntaxError:
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MalformedJSON})
+		case *json.UnmarshalTypeError:
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MismatchedFormat})
+		case validator.ValidationErrors:
+			missingRequireds := []string{}
+			for _, fieldError := range e {
+				missingRequireds = append(missingRequireds, fieldError.Error())
+			}
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MissingRequireds, "Missing": missingRequireds})
+		}
+		return
+	}
+	jwtToken, err := data.PostUserLogin(logingUser)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Error": err})
+		return
+	}
+	ctx.JSON(http.StatusCreated, gin.H{"Server": "User registered successfully", "token": jwtToken})
 }

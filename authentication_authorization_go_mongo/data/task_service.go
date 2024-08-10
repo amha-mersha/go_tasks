@@ -21,17 +21,22 @@ func (err TaskError) Error() string {
 }
 
 const (
-	IDNotFound        = "no item found with the specified id"
-	TaskAlreadyExists = "the task already exists in the database"
-	MalformedJSON     = "sent a malfomed json"
-	MismatchedFormat  = "the task have a mismatched stucture"
-	MissingRequireds  = "there are some missing required feilds"
-	MalformedID       = "the id sent is malformed"
+	IDNotFound           = "no item found with the specified id"
+	TaskAlreadyExists    = "the task already exists in the database"
+	MalformedJSON        = "sent a malfomed json"
+	MismatchedFormat     = "the task have a mismatched stucture"
+	MissingRequireds     = "there are some missing required feilds"
+	MalformedID          = "the id sent is malformed"
+	MalformedUsername    = "the username sent is malfomed"
+	UserAlreadyExist     = "user by that username exists"
+	InternalServerError  = "internal server error occured"
+	UserNotFound         = "no user found with the specified username"
+	IncorrectCredentials = "invalid email or username"
 )
 
 func GetTasks() ([]models.Task, error) {
 	var result []models.Task
-	curr, err := Collection.Find(context.TODO(), bson.D{{}}, options.Find())
+	curr, err := TaskCollection.Find(context.TODO(), bson.D{{}}, options.Find())
 	if err != nil {
 		return []models.Task{}, err
 	}
@@ -48,7 +53,7 @@ func GetTaskByID(taskID string) (models.Task, error) {
 	if err != nil {
 		return models.Task{}, fmt.Errorf(MalformedID)
 	}
-	err = Collection.FindOne(context.TODO(), bson.D{{"_id", ID}}).Decode(&result)
+	err = TaskCollection.FindOne(context.TODO(), bson.D{{"_id", ID}}).Decode(&result)
 	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
 		return models.Task{}, fmt.Errorf(IDNotFound)
 	} else if err != nil {
@@ -66,7 +71,7 @@ func UpdateTask(taskID string, updatedTask models.Task) (models.Task, error) {
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	filter := bson.D{{"_id", ID}}
 
-	err = Collection.FindOneAndUpdate(context.TODO(), filter, bson.M{"$set": updatedTask}, opts).Decode(&result)
+	err = TaskCollection.FindOneAndUpdate(context.TODO(), filter, bson.M{"$set": updatedTask}, opts).Decode(&result)
 	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
 		return models.Task{}, fmt.Errorf(IDNotFound)
 	} else if err != nil {
@@ -82,7 +87,7 @@ func DeleteTask(taskID string) (models.Task, error) {
 		return models.Task{}, fmt.Errorf(MalformedID)
 	}
 	filter := bson.D{{"_id", ID}}
-	err = Collection.FindOneAndDelete(context.TODO(), filter).Decode(&result)
+	err = TaskCollection.FindOneAndDelete(context.TODO(), filter).Decode(&result)
 	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
 		return models.Task{}, fmt.Errorf(IDNotFound)
 	} else if err != nil {
@@ -92,7 +97,7 @@ func DeleteTask(taskID string) (models.Task, error) {
 }
 
 func PostTask(newTask models.Task) (*mongo.InsertOneResult, error) {
-	result, err := Collection.InsertOne(context.TODO(), newTask)
+	result, err := TaskCollection.InsertOne(context.TODO(), newTask)
 	if err != nil {
 		return &mongo.InsertOneResult{}, fmt.Errorf(MalformedID)
 	}

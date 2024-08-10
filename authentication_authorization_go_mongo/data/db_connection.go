@@ -10,7 +10,8 @@ import (
 )
 
 var Client *mongo.Client
-var Collection *mongo.Collection
+var TaskCollection *mongo.Collection
+var UserCollection *mongo.Collection
 
 func ConnecDB() error {
 	clientOptions := options.Client().ApplyURI(os.Getenv("DB_CONNECTION_STRING"))
@@ -24,7 +25,8 @@ func ConnecDB() error {
 	if err != nil {
 		return err
 	}
-	Collection = client.Database(os.Getenv("DB_NAME")).Collection(os.Getenv("DB_COLLECTION_NAME"))
+	TaskCollection = client.Database(os.Getenv("DB_NAME")).Collection(os.Getenv("DB_TAKS_COLLECTION_NAME"))
+	UserCollection = client.Database(os.Getenv("DB_NAME")).Collection(os.Getenv("DB_USER_COLLECTION_NAME"))
 	log.Println("Database successfuly connected.")
 	return nil
 
