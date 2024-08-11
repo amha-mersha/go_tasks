@@ -142,3 +142,29 @@ func PostUserLogin(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"Server": "User registered successfully", "token": jwtToken})
 }
+
+func PostUserAssign(ctx *gin.Context) {
+	var issuedUser models.IssuedUser
+	if err := ctx.ShouldBindJSON(&issuedUser); err != nil {
+		switch e := err.(type) {
+		case *json.SyntaxError:
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MalformedJSON})
+		case *json.UnmarshalTypeError:
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MismatchedFormat})
+		case validator.ValidationErrors:
+			missingRequireds := []string{}
+			for _, fieldError := range e {
+				missingRequireds = append(missingRequireds, fieldError.Error())
+			}
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": data.MissingRequireds, "Missing": missingRequireds})
+		}
+		return
+	}
+	retrivedUser, err := data.PostUserAssign(issuedUser)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusCreated, gin.H{"Server": "User assigned role successfully", "user profile": retrivedUser})
+}

@@ -20,6 +20,7 @@ func Run(port int) {
 	private.GET("/", controllers.GetTasks)
 	private.GET("/:id", controllers.GetTaskByID)
 	private.POST("/", controllers.PostTask)
+	private.POST("/assign", controllers.PostUserAssign)
 	private.PUT("/:id", controllers.UpdateTask)
 	private.DELETE("/:id", controllers.DeleteTask)
 

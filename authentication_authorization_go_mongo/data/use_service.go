@@ -85,7 +85,7 @@ func PostUserLogin(newUser models.User) (interface{}, error) {
 	claim := UserCustomClaim{
 		Username: retrivedUser.Username,
 		Password: retrivedUser.Password,
-		UserRole: retrivedUser.Role,
+		UserRole: newUser.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(720 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -98,6 +98,25 @@ func PostUserLogin(newUser models.User) (interface{}, error) {
 		return nil, fmt.Errorf(InternalServerError)
 	}
 	return jwtToken, nil
+
+}
+
+func PostUserAssign(issuedUser models.IssuedUser) (interface{}, error) {
+
+	// filter out the user with the username
+	var retrivedUser models.IssuedUser
+
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	filter := bson.D{{"username", issuedUser.Username}}
+	update := bson.M{"$set": bson.M{"role": issuedUser.Role}}
+
+	err := UserCollection.FindOneAndUpdate(context.TODO(), filter, update, opts).Decode(&retrivedUser)
+	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
+		return models.Task{}, fmt.Errorf(IDNotFound)
+	} else if err != nil {
+		return models.Task{}, err
+	}
+	return retrivedUser, nil
 
 }
 
