@@ -25,8 +25,9 @@ func ConnecDB() error {
 	if err != nil {
 		return err
 	}
-	TaskCollection = client.Database(os.Getenv("DB_NAME")).Collection(os.Getenv("DB_TAKS_COLLECTION_NAME"))
+	TaskCollection = client.Database(os.Getenv("DB_NAME")).Collection(os.Getenv("DB_TASK_COLLECTION_NAME"))
 	UserCollection = client.Database(os.Getenv("DB_NAME")).Collection(os.Getenv("DB_USER_COLLECTION_NAME"))
+	log.Println(TaskCollection.Name(), UserCollection.Name())
 	log.Println("Database successfuly connected.")
 	return nil
 

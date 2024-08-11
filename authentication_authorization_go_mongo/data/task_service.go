@@ -31,12 +31,12 @@ const (
 	UserAlreadyExist     = "user by that username exists"
 	InternalServerError  = "internal server error occured"
 	UserNotFound         = "no user found with the specified username"
-	IncorrectCredentials = "invalid email or username"
+	IncorrectCredentials = "invalid password or username"
 )
 
-func GetTasks() ([]models.Task, error) {
-	var result []models.Task
-	curr, err := TaskCollection.Find(context.TODO(), bson.D{{}}, options.Find())
+func GetTasks() (interface{}, error) {
+	var result []models.TaskMongo
+	curr, err := TaskCollection.Find(context.TODO(), bson.D{{}})
 	if err != nil {
 		return []models.Task{}, err
 	}
@@ -47,8 +47,8 @@ func GetTasks() ([]models.Task, error) {
 	return result, nil
 }
 
-func GetTaskByID(taskID string) (models.Task, error) {
-	var result models.Task
+func GetTaskByID(taskID string) (interface{}, error) {
+	var result models.TaskMongo
 	ID, err := primitive.ObjectIDFromHex(taskID)
 	if err != nil {
 		return models.Task{}, fmt.Errorf(MalformedID)
@@ -62,8 +62,8 @@ func GetTaskByID(taskID string) (models.Task, error) {
 	return result, nil
 }
 
-func UpdateTask(taskID string, updatedTask models.Task) (models.Task, error) {
-	var result models.Task
+func UpdateTask(taskID string, updatedTask models.Task) (interface{}, error) {
+	var result models.TaskMongo
 	ID, err := primitive.ObjectIDFromHex(taskID)
 	if err != nil {
 		return models.Task{}, fmt.Errorf(MalformedID)
@@ -80,18 +80,18 @@ func UpdateTask(taskID string, updatedTask models.Task) (models.Task, error) {
 	return result, nil
 }
 
-func DeleteTask(taskID string) (models.Task, error) {
-	var result models.Task
+func DeleteTask(taskID string) (models.TaskMongo, error) {
+	var result models.TaskMongo
 	ID, err := primitive.ObjectIDFromHex(taskID)
 	if err != nil {
-		return models.Task{}, fmt.Errorf(MalformedID)
+		return models.TaskMongo{}, fmt.Errorf(MalformedID)
 	}
 	filter := bson.D{{"_id", ID}}
 	err = TaskCollection.FindOneAndDelete(context.TODO(), filter).Decode(&result)
 	if err != nil && errors.Is(err, mongo.ErrNoDocuments) {
-		return models.Task{}, fmt.Errorf(IDNotFound)
+		return models.TaskMongo{}, fmt.Errorf(IDNotFound)
 	} else if err != nil {
-		return models.Task{}, err
+		return models.TaskMongo{}, err
 	}
 	return result, nil
 }

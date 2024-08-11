@@ -13,15 +13,18 @@ import (
 
 func Run(port int) {
 	router := gin.Default()
-	router.Use(middleware.AuthMiddleware())
+	private := router.Group("/api/v1/tasks")
+	private.Use(middleware.AuthMiddleware())
+	public := router.Group("/api/v1/user")
 
-	router.GET("/api/v1/tasks", controllers.GetTasks)
-	router.GET("/api/v1/tasks/:id", controllers.GetTaskByID)
-	router.POST("/api/v1/tasks", controllers.PostTask)
-	router.POST("/api/v1/user/register", controllers.PostUserRegister)
-	router.POST("/api/v1/user/login", controllers.PostUserLogin)
-	router.PUT("/api/v1/tasks/:id", controllers.UpdateTask)
-	router.DELETE("/api/v1/tasks/:id", controllers.DeleteTask)
+	private.GET("/", controllers.GetTasks)
+	private.GET("/:id", controllers.GetTaskByID)
+	private.POST("/", controllers.PostTask)
+	private.PUT("/:id", controllers.UpdateTask)
+	private.DELETE("/:id", controllers.DeleteTask)
+
+	public.POST("/register", controllers.PostUserRegister)
+	public.POST("/login", controllers.PostUserLogin)
 
 	err := data.ConnecDB()
 	if err != nil {

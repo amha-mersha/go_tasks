@@ -1,27 +1,27 @@
 package middleware
 
 var PathMap = map[string]map[string]bool{
-	"": map[string]bool{
+	"": {
 		"user":  true,
 		"admin": true,
 	},
-	"GET": map[string]bool{
+	"GET": {
 		"user":  true,
 		"admin": true,
 	},
-	"POST": map[string]bool{
+	"POST": {
 		"user":  false,
 		"admin": true,
 	},
-	"PUT": map[string]bool{
+	"PUT": {
 		"user":  false,
 		"admin": true,
 	},
-	"DELETE": map[string]bool{
+	"DELETE": {
 		"user":  false,
 		"admin": true,
 	},
-	"PATCH": map[string]bool{
+	"PATCH": {
 		"user":  false,
 		"admin": true,
 	},

@@ -137,7 +137,7 @@ func PostUserLogin(ctx *gin.Context) {
 	jwtToken, err := data.PostUserLogin(logingUser)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"Error": err})
+		ctx.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"Server": "User registered successfully", "token": jwtToken})

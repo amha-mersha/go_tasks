@@ -16,10 +16,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// getting the Authorization header
 		authHeader := c.GetHeader("Authorization")
-		if c.Request.URL.String() == "/api/v1/user/register" && c.Request.Method == "POST" {
-			c.Next()
-			return
-		}
+
 		if authHeader == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Error": "Authorization authHeader is required"})
 			c.Abort()
@@ -33,35 +30,28 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// checking for the correctness of the token
-		token, err := jwt.Parse(authParts[1], func(t *jwt.Token) (interface{}, error) {
+		claim := &data.UserCustomClaim{}
+		token, err := jwt.ParseWithClaims(authParts[1], claim, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method :%v", t.Header["alg"])
 			}
-			return os.Getenv("SIGNITURE_SECRET"), nil
+			return []byte(os.Getenv("SIGNITURE_SECRET")), nil
 		})
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"Error": err})
+			c.JSON(http.StatusBadRequest, gin.H{"Error": data.InternalServerError + " " + err.Error()})
 			c.Abort()
 			return
 		}
 		if !token.Valid {
-			c.JSON(http.StatusBadRequest, gin.H{"Error": err})
-			c.Abort()
-			return
-		}
-
-		// checking if the claim is in correct fomatt
-		claim, ok := token.Claims.(*data.UserCustomClaim)
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"Error": "Invalid token claims"})
+			c.JSON(http.StatusBadRequest, gin.H{"Error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
 		// cheking if the time range of the claim haven't expired
 		if time.Now().After(claim.ExpiresAt.Time) || time.Now().Before(claim.IssuedAt.Time) {
-			c.JSON(http.StatusBadRequest, gin.H{"Error": err})
+			c.JSON(http.StatusBadRequest, gin.H{"Error": "Token expired"})
 			c.Abort()
 			return
 		}
@@ -70,7 +60,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// check role and the route they are trying to access
 		user, err := data.GetUserByUsername(claim.Username)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"Error": err})
+			c.JSON(http.StatusInternalServerError, gin.H{"Error": data.UserNotFound})
 			c.Abort()
 			return
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -61,7 +62,7 @@ func PostUserRegister(newUser models.User) error {
 }
 
 func PostUserLogin(newUser models.User) (interface{}, error) {
-	jwtSecret := []byte("SIGNITURE_SECRET")
+	jwtSecret := []byte(os.Getenv("SIGNITURE_SECRET"))
 
 	// filter out the user with the username
 	filter := bson.D{{"username", newUser.Username}}
@@ -76,20 +77,15 @@ func PostUserLogin(newUser models.User) (interface{}, error) {
 	}
 
 	// checking if the username and password are correct
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf(InternalServerError)
-	}
-	newUser.Password = string(hashedPassword)
 	if bcrypt.CompareHashAndPassword([]byte(retrivedUser.Password), []byte(newUser.Password)) != nil {
 		return nil, fmt.Errorf(IncorrectCredentials)
 	}
 
 	// generating the jwt token
 	claim := UserCustomClaim{
-		Username: newUser.Username,
-		Password: newUser.Password,
-		UserRole: newUser.Role,
+		Username: retrivedUser.Username,
+		Password: retrivedUser.Password,
+		UserRole: retrivedUser.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(720 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
