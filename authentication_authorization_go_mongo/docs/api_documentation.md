@@ -234,6 +234,61 @@ Welcome to the Task Manager API documentation. This API allows registered users 
       }
       ```
 
+### 6. Update User Role
+
+- **Endpoint:** `/user/assign-role`
+- **Method:** `PUT`
+- **Description:** Allows an admin to update the role of a user. This endpoint only updates the role and does not expose or modify the user's password or other sensitive information.
+- **Request Body:**
+
+  - **Content-Type:** `application/json`
+  - **Body:**
+    ```json
+    {
+      "username": "user123",
+      "role": "admin"
+    }
+    ```
+  - **Fields:**
+    - `username` (string): The username of the user whose role is to be updated.
+    - `role` (string): The new role to assign to the user (e.g., "admin", "user").
+
+- **Response:**
+
+  - **Status Code:** `200 OK`
+  - **Body:**
+    ```json
+    {
+      "username": "user123",
+      "role": "admin"
+    }
+    ```
+  - **Error Response:**
+    - **Status Code:** `400 Bad Request`
+      - **Body:**
+        ```json
+        {
+          "error": "Invalid input"
+        }
+        ```
+    - **Status Code:** `404 Not Found`
+      - **Body:**
+        ```json
+        {
+          "error": "User not found"
+        }
+        ```
+    - **Status Code:** `500 Internal Server Error`
+      - **Body:**
+        ```json
+        {
+          "error": "Failed to update user role"
+        }
+        ```
+
+- **Permissions:**
+  - This endpoint is restricted to users with the `admin` role. An authorization middleware is used to verify the user's role before processing the request.
+
 ## Models
 
 ### Task Model
