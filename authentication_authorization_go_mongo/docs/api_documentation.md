@@ -1,21 +1,84 @@
-# Task-Manager
+# Task-Manager API Documentation
 
-Welcome to the Task Manager API documentation. This API allows users to manage tasks efficiently by providing endpoints to create, read, update, and delete tasks. The API is designed to handle task-related operations such as setting task priorities, tracking due dates, and updating task statuses. The API is built using Go with the Gin web framework and MongoDB as the database. The following endpoints are available to interact with tasks.
+Welcome to the Task Manager API documentation. This API allows registered users to manage tasks efficiently. The API supports user authentication via JWT and enforces role-based access control to ensure secure and appropriate access to resources.
 
 ## Base URL
 
 `http://localhost:<port>/api/v1`
 
-## Endpoints
+## Authentication and Authorization
+
+### User Roles
+
+- **Admin**: Can create, update, delete, and retrieve tasks.
+- **User**: Can only retrieve tasks.
+- **Anonymous**: Cannot access any task-related endpoints. Must be registered and logged in.
+
+### JWT Token
+
+- **Authorization Header**: All requests to the protected endpoints must include a valid JWT token in the `Authorization` header.
+- **Format**: `Authorization: Bearer <token>`
+
+## Public Endpoints
+
+### 1. Register a New User
+
+- **Endpoint**: `/user/register`
+- **Method**: `POST`
+- **Description**: Registers a new user. If no users exist in the system, the first user will be an admin.
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Body**:
+    ```json
+    {
+      "username": "newuser",
+      "password": "password123",
+      "role": "user"
+    }
+    ```
+  - **Notes**: The `role` field can only be "user" during registration. If the database is empty, the first user will automatically become an admin.
+- **Response**:
+  - **Status Code**: `201 Created`
+  - **Body**:
+    ```json
+    {
+      "message": "User registered successfully"
+    }
+    ```
+
+### 2. Login a User
+
+- **Endpoint**: `/user/login`
+- **Method**: `POST`
+- **Description**: Logs in a registered user and returns a JWT token.
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Body**:
+    ```json
+    {
+      "username": "existinguser",
+      "password": "password123"
+    }
+    ```
+- **Response**:
+  - **Status Code**: `200 OK`
+  - **Body**:
+    ```json
+    {
+      "token": "<jwt_token>"
+    }
+    ```
+
+## Protected Endpoints (Require JWT)
 
 ### 1. Get All Tasks
 
-- **Endpoint:** `/tasks`
-- **Method:** `GET`
-- **Description:** Retrieves a list of all tasks.
-- **Response:**
-  - **Status Code:** `200 OK`
-  - **Body:**
+- **Endpoint**: `/tasks`
+- **Method**: `GET`
+- **Description**: Retrieves a list of all tasks. Only accessible by authenticated users (admin or user).
+- **Response**:
+  - **Status Code**: `200 OK`
+  - **Body**:
     ```json
     [
       {
@@ -27,28 +90,26 @@ Welcome to the Task Manager API documentation. This API allows users to manage t
         "created_at": "2024-08-01T00:00:00Z",
         "updated_at": "2024-08-01T00:00:00Z"
       },
-      {
-        "title": "Task 2",
-        "description": "Description for Task 2",
-        "status": "Completed",
-        "priority": "Medium",
-        "due_date": "2024-08-15T00:00:00Z",
-        "created_at": "2024-08-02T00:00:00Z",
-        "updated_at": "2024-08-05T00:00:00Z"
-      }
+      ...
     ]
     ```
+  - **Error Response**:
+    - **Status Code**: `401 Unauthorized`
+    - **Body**:
+      ```json
+      {
+        "error": "Invalid or missing token"
+      }
+      ```
 
 ### 2. Get Task by ID
 
-- **Endpoint:** `/tasks/:id`
-- **Method:** `GET`
-- **Description:** Retrieves a single task by its ID.
-- **Parameters:**
-  - **Path Parameter:** `id` (string) - The unique identifier of the task.
-- **Response:**
-  - **Status Code:** `200 OK`
-  - **Body:**
+- **Endpoint**: `/tasks/:id`
+- **Method**: `GET`
+- **Description**: Retrieves a single task by its ID. Only accessible by authenticated users (admin or user).
+- **Response**:
+  - **Status Code**: `200 OK`
+  - **Body**:
     ```json
     {
       "title": "Task 1",
@@ -60,23 +121,23 @@ Welcome to the Task Manager API documentation. This API allows users to manage t
       "updated_at": "2024-08-01T00:00:00Z"
     }
     ```
-  - **Error Response:**
-    - **Status Code:** `404 Not Found`
-    - **Body:**
+  - **Error Response**:
+    - **Status Code**: `404 Not Found`
+    - **Body**:
       ```json
       {
         "error": "Task not found"
       }
       ```
 
-### 3. Create a New Task
+### 3. Create a New Task (Admin Only)
 
-- **Endpoint:** `/tasks`
-- **Method:** `POST`
-- **Description:** Creates a new task.
-- **Request Body:**
-  - **Content-Type:** `application/json`
-  - **Body:**
+- **Endpoint**: `/tasks`
+- **Method**: `POST`
+- **Description**: Creates a new task. Only accessible by authenticated admins.
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Body**:
     ```json
     {
       "title": "New Task",
@@ -86,25 +147,31 @@ Welcome to the Task Manager API documentation. This API allows users to manage t
       "due_date": "2024-08-20T00:00:00Z"
     }
     ```
-- **Response:**
-  - **Status Code:** `201 Created`
-  - **Body:**
+- **Response**:
+  - **Status Code**: `201 Created`
+  - **Body**:
     ```json
     {
       "message": "Task created successfully"
     }
     ```
+  - **Error Response**:
+    - **Status Code**: `401 Unauthorized`
+    - **Body**:
+      ```json
+      {
+        "error": "Unauthorized access"
+      }
+      ```
 
-### 4. Update an Existing Task
+### 4. Update an Existing Task (Admin Only)
 
-- **Endpoint:** `/tasks/:id`
-- **Method:** `PUT`
-- **Description:** Updates an existing task by its ID.
-- **Parameters:**
-  - **Path Parameter:** `id` (string) - The unique identifier of the task.
-- **Request Body:**
-  - **Content-Type:** `application/json`
-  - **Body:**
+- **Endpoint**: `/tasks/:id`
+- **Method**: `PUT`
+- **Description**: Updates an existing task by its ID. Only accessible by authenticated admins.
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Body**:
     ```json
     {
       "title": "Updated Task",
@@ -114,44 +181,56 @@ Welcome to the Task Manager API documentation. This API allows users to manage t
       "due_date": "2024-08-18T00:00:00Z"
     }
     ```
-- **Response:**
-  - **Status Code:** `200 OK`
-  - **Body:**
+- **Response**:
+  - **Status Code**: `200 OK`
+  - **Body**:
     ```json
     {
       "message": "Task updated successfully"
     }
     ```
-  - **Error Response:**
-    - **Status Code:** `404 Not Found`
-    - **Body:**
+  - **Error Response**:
+    - **Status Code**: `404 Not Found`
+    - **Body**:
       ```json
       {
         "error": "Task not found"
       }
       ```
+    - **Status Code**: `401 Unauthorized`
+    - **Body**:
+      ```json
+      {
+        "error": "Unauthorized access"
+      }
+      ```
 
-### 5. Delete a Task
+### 5. Delete a Task (Admin Only)
 
-- **Endpoint:** `/tasks/:id`
-- **Method:** `DELETE`
-- **Description:** Deletes a task by its ID.
-- **Parameters:**
-  - **Path Parameter:** `id` (string) - The unique identifier of the task.
-- **Response:**
-  - **Status Code:** `200 OK`
-  - **Body:**
+- **Endpoint**: `/tasks/:id`
+- **Method**: `DELETE`
+- **Description**: Deletes a task by its ID. Only accessible by authenticated admins.
+- **Response**:
+  - **Status Code**: `200 OK`
+  - **Body**:
     ```json
     {
       "message": "Task deleted successfully"
     }
     ```
-  - **Error Response:**
-    - **Status Code:** `404 Not Found`
-    - **Body:**
+  - **Error Response**:
+    - **Status Code**: `404 Not Found`
+    - **Body**:
       ```json
       {
         "error": "Task not found"
+      }
+      ```
+    - **Status Code**: `401 Unauthorized`
+    - **Body**:
+      ```json
+      {
+        "error": "Unauthorized access"
       }
       ```
 
@@ -170,56 +249,3 @@ type Task struct {
     UpdatedAt   time.Time `json:"updated_at"`
 }
 ```
-
-### Title: The title of the task.
-
-Description: A brief description of the task.
-
-Status: The current status of the task (e.g., Pending, In Progress, Completed).
-
-Priority: The priority level of the task (e.g., Low, Medium, High).
-
-DueDate: The due date for the task.
-
-CreatedAt: The timestamp when the task was created.
-
-UpdatedAt: The timestamp when the task was last updated.
-
-## Database
-
-- MongoDB is used to store the tasks.
-- Connection is handled in the data/db_connection.go file.
-
-## Environment Variables
-
-- GODOTENV is used for managing environment variables.
-- Typical .env file includes:
-
-```bash
-MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/taskmanager?retryWrites=true&w=majority
-PORT=8080
-```
-
-## Running the Application
-
-- Clone the repository.
-- Create a .env file in the root directory with the necessary environment variables.
-- Run the application:
-
-```bash
-go run main.go
-```
-
-- The server will be up and running on http://localhost:<port>.
-
-## Conclusion
-
-This API allows users to manage tasks by providing endpoints for creating, reading, updating, and deleting tasks. The app is built using Go, Gin, and MongoDB, providing a scalable solution for task management.
-
-### Notes:
-
-- **Endpoints** are documented with their respective HTTP methods and expected request/response formats.
-- **Models** section details the structure of the Task model.
-- **Database** and **Environment Variables** sections provide necessary configuration details.
-
-This documentation gives a clear overview of how to use the API and what to expect from each endpoint.
