@@ -40,6 +40,7 @@ type TaskSuccess struct {
 
 type UserError struct {
 	Message string
+	Code    int
 }
 
 func (usererr *UserError) Error() string {
@@ -48,6 +49,7 @@ func (usererr *UserError) Error() string {
 
 type TaskError struct {
 	Message string
+	Code    int
 }
 
 func (taskerr *TaskError) Error() string {
@@ -61,4 +63,13 @@ type TaskRepository interface {
 	CreateTask(context.Context, Task) (TaskSuccess, error)
 	DeleteTask(context.Context, string) (TaskSuccess, error)
 	UpdateTask(context.Context, string) (TaskSuccess, error)
+}
+
+// task use case interface
+type TaskUsecase interface {
+	GetAllTasks(cxt context.Context) ([]Task, error)
+	GetTaskByID(cxt context.Context, taskID string) (Task, error)
+	CreateTask(cxt context.Context, newTask Task) (TaskSuccess, error)
+	UpdateTask(cxt context.Context, updateTask Task) (TaskSuccess, error)
+	DeleteTask(cxt context.Context, taskID string) (TaskSuccess, error)
 }
