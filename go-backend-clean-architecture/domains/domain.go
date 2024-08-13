@@ -3,35 +3,38 @@ package domain
 import (
 	"context"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // task struc
 type Task struct {
-	ID          primitive.ObjectID `json:"id" bson:"_id"`
-	UserID      primitive.ObjectID `json:"userID" bson:"userID"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Status      string             `json:"status"`
-	Priority    string             `json:"priority"`
-	DueDate     time.Time          `json:"due_date"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at"`
+	ID          string    `json:"id" bson:"_id,omitempty"`
+	UserID      string    `json:"userID" bson:"userID"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Status      string    `json:"status"`
+	Priority    string    `json:"priority"`
+	DueDate     time.Time `json:"due_date"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // user structs
 
 type User struct {
-	ID       primitive.ObjectID `json:"id" bson:"_id"`
-	Username string             `json:"username"`
-	Password string             `json:"password"`
-	Role     string             `json:"role"`
+	ID       string `json:"id" bson:"_id,omitempty"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
 // success struct
 
 type TaskSuccess struct {
+	Message string
+	Return  interface{}
+}
+
+type UserSuccess struct {
 	Message string
 	Return  interface{}
 }
@@ -58,18 +61,39 @@ func (taskerr *TaskError) Error() string {
 
 // task repository struct
 type TaskRepository interface {
-	FetchAllTask(context.Context) ([]Task, error)
-	FetchTaskByID(context.Context, string) (Task, error)
-	CreateTask(context.Context, Task) (TaskSuccess, error)
-	DeleteTask(context.Context, string) (TaskSuccess, error)
-	UpdateTask(context.Context, string) (TaskSuccess, error)
+	FetchAllTasks(cxt context.Context) ([]Task, *TaskError)
+	FetchTaskByID(cxt context.Context, ID string) (Task, *TaskError)
+	CreateTask(cxt context.Context, newTask Task) (TaskSuccess, *TaskError)
+	UpdateTask(cxt context.Context, updateTask Task) (TaskSuccess, *TaskError)
+	DeleteTask(cxt context.Context, taskID string) (TaskSuccess, *TaskError)
 }
 
 // task use case interface
 type TaskUsecase interface {
-	GetAllTasks(cxt context.Context) ([]Task, error)
-	GetTaskByID(cxt context.Context, taskID string) (Task, error)
-	CreateTask(cxt context.Context, newTask Task) (TaskSuccess, error)
-	UpdateTask(cxt context.Context, updateTask Task) (TaskSuccess, error)
-	DeleteTask(cxt context.Context, taskID string) (TaskSuccess, error)
+	GetAllTasks(cxt context.Context) ([]Task, *TaskError)
+	GetTaskByID(cxt context.Context, taskID string) (Task, *TaskError)
+	CreateTask(cxt context.Context, newTask Task) (TaskSuccess, *TaskError)
+	UpdateTask(cxt context.Context, updateTask Task) (TaskSuccess, *TaskError)
+	DeleteTask(cxt context.Context, taskID string) (TaskSuccess, *TaskError)
+}
+
+// users use case interface
+type UserUsecase interface {
+	GetAllUser(cxt context.Context) ([]User, *UserError)
+	GetUserByID(cxt context.Context, userID string) (User, *UserError)
+	GetUserByUsername(cxt context.Context, username string) (User, *UserError)
+	CreateUser(cxt context.Context, newUser User) (UserSuccess, *UserError)
+	UpdateUser(cxt context.Context, userUpdate User) (UserSuccess, *UserError)
+	DeleteUser(cxt context.Context, authority User, deleteID string) (UserSuccess, *UserError)
+}
+
+// task repository struct
+type UserRepository interface {
+	FetchAllUsers(cxt context.Context) ([]User, *UserError)
+	FetchUserCount(cxt context.Context) (int, *UserError)
+	FetchUserByID(cxt context.Context, ID string) (User, *UserError)
+	FetchUserByUsername(cxt context.Context, username string) (User, *UserError)
+	CreateUser(cxt context.Context, newUser User) (UserSuccess, *UserError)
+	UpdateUser(cxt context.Context, updateUser User) (UserSuccess, *UserError)
+	DeleteUser(cxt context.Context, userID string) (UserSuccess, *UserError)
 }

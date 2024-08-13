@@ -55,9 +55,9 @@ func AuthMiddleWare(validRoles ...string) gin.HandlerFunc {
 			return
 		}
 
-		retrivedRole, ok := token.Claims.(jwt.MapClaims)["UserRole"]
+		retrivedRole, ok := token.Claims.(jwt.MapClaims)["role"]
 		if !ok {
-			ctx.JSON(http.StatusBadRequest, gin.H{"Error": "Invalid token, Role of the use is not found"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"Error": "Invalid token, Role of the user is not found"})
 			ctx.Abort()
 			return
 		}

@@ -10,14 +10,14 @@ import (
 
 type UserClaim struct {
 	Username string `json:"username"`
-	UserRole string `json:"userrole"`
+	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-func CreateJWTToken(username string, userrole string, timeDuration time.Duration) (string, error) {
+func CreateJWTToken(username string, role string, timeDuration time.Duration) (string, error) {
 	claim := UserClaim{
 		Username: username,
-		UserRole: userrole,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(timeDuration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
