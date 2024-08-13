@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func AuthMiddleWare() gin.HandlerFunc {
@@ -17,6 +18,8 @@ func AuthMiddleWare() gin.HandlerFunc {
 		if len(authTokens) != 2 || authTokens[0] != "Bearer" {
 			ctx.JSON(http.StatusBadRequest, gin.H{"Error": "Invalid authorization header"})
 		}
+
+		token, ok := jwt.ParseWithClaims(authTokens[1])
 
 		ctx.Next()
 	}
