@@ -37,6 +37,7 @@ func (taskRepo *taskRepository) FetchAllTasks(cxt context.Context) ([]domain.Tas
 
 	var fetchedTasks []domain.Task
 	err = cursor.All(cxt, &fetchedTasks)
+	defer cursor.Close(cxt)
 	if err != nil {
 		return []domain.Task{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}

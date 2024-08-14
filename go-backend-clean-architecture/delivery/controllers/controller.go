@@ -3,6 +3,8 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	domain "github.com/amha-mersha/go_tasks/go-backend-clean-architecture/domains"
@@ -186,7 +188,12 @@ func (controller *Controller) PostUserLogin(cxt *gin.Context) {
 		cxt.JSON(http.StatusUnauthorized, gin.H{"Error": "Invalid credentials"})
 		return
 	}
-	token, errToken := infrastructure.CreateJWTToken(result.Username, result.Role, time.Hour*720)
+	timeDurationEnv, errDuration := strconv.ParseInt(os.Getenv("SIGNITURE_TIME_DURATION"), 10, 64)
+	if errDuration != nil {
+		cxt.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+		return
+	}
+	token, errToken := infrastructure.CreateJWTToken(result.Username, result.Role, time.Duration(timeDurationEnv)*time.Second)
 	if errToken != nil {
 		cxt.JSON(http.StatusInternalServerError, gin.H{"Error": errToken.Error()})
 		return

@@ -31,5 +31,5 @@ func main() {
 	database := client.Database(os.Getenv("DB_NAME"))
 	log.Println("Database successfuly connected.")
 	router := gin.Default()
-	route.Run(port, *database, time.Hour*720, router, os.Getenv("DB_USER_COLLECTION_NAME"), os.Getenv("DB_TASK_COLLECTION_NAME"))
+	route.Run(port, *database, time.Second, router, os.Getenv("DB_USER_COLLECTION_NAME"), os.Getenv("DB_TASK_COLLECTION_NAME"))
 }
