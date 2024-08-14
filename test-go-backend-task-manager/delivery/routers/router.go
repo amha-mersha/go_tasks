@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/amha-mersha/go_tasks/go-backend-clean-architecture/delivery/controllers"
-	"github.com/amha-mersha/go_tasks/go-backend-clean-architecture/infrastructure"
-	repositorie "github.com/amha-mersha/go_tasks/go-backend-clean-architecture/repositories"
-	"github.com/amha-mersha/go_tasks/go-backend-clean-architecture/usecases"
+	"github.com/amha-mersha/go_tasks/test-go-backend-task-manager/delivery/controllers"
+	"github.com/amha-mersha/go_tasks/test-go-backend-task-manager/infrastructure"
+	repositorie "github.com/amha-mersha/go_tasks/test-go-backend-task-manager/repositories"
+	"github.com/amha-mersha/go_tasks/test-go-backend-task-manager/usecases"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 )

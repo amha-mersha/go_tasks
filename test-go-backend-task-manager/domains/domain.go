@@ -7,24 +7,24 @@ import (
 
 // task struc
 type Task struct {
-	ID          string    `json:"id" bson:"_id,omitempty"`
+	ID          string    `json:"id,omitempty" bson:"_id,omitempty"`
 	UserID      string    `json:"userID" bson:"userID"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Status      string    `json:"status"`
-	Priority    string    `json:"priority"`
-	DueDate     time.Time `json:"due_date"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Title       string    `json:"title" bson:"title"`
+	Description string    `json:"description,omitempty" bson:"description,omitempty"`
+	Status      string    `json:"status,omitempty" bson:"status,omitempty"`
+	Priority    string    `json:"priority,omitempty" bson:"priority,omitempty"`
+	DueDate     time.Time `json:"due_date,omitempty" bson:"due_date,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }
 
 // user structs
 
 type User struct {
-	ID       string `json:"id" bson:"_id,omitempty"`
+	ID       string `json:"id,omitempty" bson:"_id,omitempty"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Role     string `json:"role"`
+	Role     string `json:"role,omitempty"`
 }
 
 // success struct

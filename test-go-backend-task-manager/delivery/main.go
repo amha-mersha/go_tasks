@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	route "github.com/amha-mersha/go_tasks/go-backend-clean-architecture/delivery/routers"
+	route "github.com/amha-mersha/go_tasks/test-go-backend-task-manager/delivery/routers"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
