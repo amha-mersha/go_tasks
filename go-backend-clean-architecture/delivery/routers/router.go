@@ -13,12 +13,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func Run(port int, database mongo.Database, timeout time.Duration, gin *gin.Engine, usercollection string, taskcollection string) {
-	public := gin.Group("/api/v1")
-	private := gin.Group("/api/v1")
+func Run(port int, database mongo.Database, timeout time.Duration, router *gin.Engine, usercollection string, taskcollection string) {
+	public := router.Group("/api/v1")
+	private := router.Group("/api/v1")
 	private.Use(infrastructure.AuthMiddleWare("admin"))
 	public.Use(infrastructure.AuthMiddleWare("user", "admin"))
-	open := gin.Group("/api/v1")
+	open := router.Group("/api/v1")
 
 	taskRepository := repositorie.NewTaskRepository(&database, taskcollection)
 	taskUsecase := usecases.NewTaskUsecase(&taskRepository, time.Second*5)
@@ -36,6 +36,6 @@ func Run(port int, database mongo.Database, timeout time.Duration, gin *gin.Engi
 	public.GET("/task", controller.GetTasks)
 	public.GET("/task/:id", controller.GetTaskByID)
 
-	gin.Run("localhost:" + strconv.Itoa(port))
+	router.Run("localhost:" + strconv.Itoa(port))
 	log.Println("Server is running on port:", port)
 }
