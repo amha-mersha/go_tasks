@@ -27,18 +27,6 @@ type User struct {
 	Role     string `json:"role,omitempty"`
 }
 
-// success struct
-
-type TaskSuccess struct {
-	Message string
-	Return  interface{}
-}
-
-type UserSuccess struct {
-	Message string
-	Return  interface{}
-}
-
 // error structs
 
 type UserError struct {
@@ -63,18 +51,18 @@ func (taskerr *TaskError) Error() string {
 type TaskRepository interface {
 	FetchAllTasks(cxt context.Context) ([]Task, *TaskError)
 	FetchTaskByID(cxt context.Context, ID string) (Task, *TaskError)
-	CreateTask(cxt context.Context, newTask Task) (TaskSuccess, *TaskError)
-	UpdateTask(cxt context.Context, updateTask Task) (TaskSuccess, *TaskError)
-	DeleteTask(cxt context.Context, taskID string) (TaskSuccess, *TaskError)
+	CreateTask(cxt context.Context, newTask Task) (string, *TaskError)
+	UpdateTask(cxt context.Context, updateTask Task) (Task, *TaskError)
+	DeleteTask(cxt context.Context, taskID string) (Task, *TaskError)
 }
 
 // task use case interface
 type TaskUsecase interface {
 	GetAllTasks(cxt context.Context) ([]Task, *TaskError)
 	GetTaskByID(cxt context.Context, taskID string) (Task, *TaskError)
-	CreateTask(cxt context.Context, newTask Task) (TaskSuccess, *TaskError)
-	UpdateTask(cxt context.Context, updateTask Task) (TaskSuccess, *TaskError)
-	DeleteTask(cxt context.Context, taskID string) (TaskSuccess, *TaskError)
+	CreateTask(cxt context.Context, newTask Task) (string, *TaskError)
+	UpdateTask(cxt context.Context, updateTask Task) (Task, *TaskError)
+	DeleteTask(cxt context.Context, taskID string) (Task, *TaskError)
 }
 
 // users use case interface
@@ -82,9 +70,9 @@ type UserUsecase interface {
 	GetAllUser(cxt context.Context) ([]User, *UserError)
 	GetUserByID(cxt context.Context, userID string) (User, *UserError)
 	GetUserByUsername(cxt context.Context, username string) (User, *UserError)
-	CreateUser(cxt context.Context, newUser User) (UserSuccess, *UserError)
-	UpdateUser(cxt context.Context, userUpdate User) (UserSuccess, *UserError)
-	DeleteUser(cxt context.Context, authority User, deleteID string) (UserSuccess, *UserError)
+	CreateUser(cxt context.Context, newUser User) (string, *UserError)
+	UpdateUser(cxt context.Context, userUpdate User) (User, *UserError)
+	DeleteUser(cxt context.Context, authority User, deleteID string) (User, *UserError)
 }
 
 // task repository struct
@@ -93,7 +81,7 @@ type UserRepository interface {
 	FetchUserCount(cxt context.Context) (int, *UserError)
 	FetchUserByID(cxt context.Context, ID string) (User, *UserError)
 	FetchUserByUsername(cxt context.Context, username string) (User, *UserError)
-	CreateUser(cxt context.Context, newUser User) (UserSuccess, *UserError)
-	UpdateUser(cxt context.Context, updateUser User) (UserSuccess, *UserError)
-	DeleteUser(cxt context.Context, userID string) (UserSuccess, *UserError)
+	CreateUser(cxt context.Context, newUser User) (string, *UserError)
+	UpdateUser(cxt context.Context, updateUser User) (User, *UserError)
+	DeleteUser(cxt context.Context, userID string) (User, *UserError)
 }

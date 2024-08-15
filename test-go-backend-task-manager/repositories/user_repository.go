@@ -4,26 +4,26 @@ import (
 	"context"
 	"net/http"
 
-	domain "github.com/amha-mersha/go_tasks/go-backend-clean-architecture/domains"
+	domain "github.com/amha-mersha/go_tasks/test-go-backend-task-manager/domains"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type userRepository struct {
+type UserRepository struct {
 	userDatabase   *mongo.Database
 	userCollection string
 }
 
-func NewUserRepository(database *mongo.Database, collection string) userRepository {
-	return userRepository{
+func NewUserRepository(database *mongo.Database, collection string) UserRepository {
+	return UserRepository{
 		userDatabase:   database,
 		userCollection: collection,
 	}
 }
 
-func (userRepo *userRepository) FetchAllUsers(cxt context.Context) ([]domain.User, *domain.UserError) {
+func (userRepo *UserRepository) FetchAllUsers(cxt context.Context) ([]domain.User, *domain.UserError) {
 	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	filter := bson.D{{}}
 	cursor, err := collection.Find(cxt, filter)
@@ -39,7 +39,7 @@ func (userRepo *userRepository) FetchAllUsers(cxt context.Context) ([]domain.Use
 	return users, nil
 }
 
-func (userRepo *userRepository) FetchUserByID(cxt context.Context, ID string) (domain.User, *domain.UserError) {
+func (userRepo *UserRepository) FetchUserByID(cxt context.Context, ID string) (domain.User, *domain.UserError) {
 	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	taskID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
@@ -55,7 +55,7 @@ func (userRepo *userRepository) FetchUserByID(cxt context.Context, ID string) (d
 	return retrivedUser, nil
 }
 
-func (userRepo *userRepository) FetchUserByUsername(cxt context.Context, username string) (domain.User, *domain.UserError) {
+func (userRepo *UserRepository) FetchUserByUsername(cxt context.Context, username string) (domain.User, *domain.UserError) {
 	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	filter := bson.D{{"username", username}}
 	var retrivedUser domain.User
@@ -67,7 +67,7 @@ func (userRepo *userRepository) FetchUserByUsername(cxt context.Context, usernam
 	return retrivedUser, nil
 }
 
-func (userRepo *userRepository) FetchUserCount(cxt context.Context) (int, *domain.UserError) {
+func (userRepo *UserRepository) FetchUserCount(cxt context.Context) (int, *domain.UserError) {
 	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	usersCount, err := collection.EstimatedDocumentCount(cxt)
 	if err != nil {
@@ -76,37 +76,41 @@ func (userRepo *userRepository) FetchUserCount(cxt context.Context) (int, *domai
 	return int(usersCount), nil
 }
 
-func (userRepo *userRepository) CreateUser(cxt context.Context, newUser domain.User) (domain.UserSuccess, *domain.UserError) {
+func (userRepo *UserRepository) CreateUser(cxt context.Context, newUser domain.User) (string, *domain.UserError) {
 	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	createdUser, err := collection.InsertOne(cxt, newUser)
 	if err != nil {
-		return domain.UserSuccess{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return "", &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
-	return domain.UserSuccess{Message: "User created successfully", Return: createdUser}, nil
+	insertedID, ok := createdUser.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+	}
+	return insertedID.Hex(), nil
 }
 
-func (userRepo *userRepository) UpdateUser(cxt context.Context, updateTask domain.User) (domain.UserSuccess, *domain.UserError) {
+func (userRepo *UserRepository) UpdateUser(cxt context.Context, updateTask domain.User) (domain.User, *domain.UserError) {
 	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	filter := bson.D{{"_id", updateTask.ID}}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	var returnedUser domain.User
 	err := collection.FindOneAndUpdate(cxt, filter, bson.D{{"$set", updateTask}}, opts).Decode(&returnedUser)
 	if err != nil {
-		return domain.UserSuccess{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
-	return domain.UserSuccess{Message: "User updated successfully", Return: returnedUser}, nil
+	return returnedUser, nil
 }
 
-func (userRepo *userRepository) DeleteUser(cxt context.Context, ID string) (domain.UserSuccess, *domain.UserError) {
+func (userRepo *UserRepository) DeleteUser(cxt context.Context, ID string) (domain.User, *domain.UserError) {
 	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	taskID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
-		return domain.UserSuccess{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
 	var returnedUser domain.User
 	err = collection.FindOneAndDelete(cxt, bson.D{{"_id", taskID}}).Decode(&returnedUser)
 	if err != nil {
-		return domain.UserSuccess{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
-	return domain.UserSuccess{Message: "User deleted successfully", Return: returnedUser}, nil
+	return returnedUser, nil
 }

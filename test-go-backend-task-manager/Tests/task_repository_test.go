@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"testing"
 	"time"
 
 	domain "github.com/amha-mersha/go_tasks/test-go-backend-task-manager/domains"
 	repositorie "github.com/amha-mersha/go_tasks/test-go-backend-task-manager/repositories"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -27,11 +28,11 @@ func (suite *testRepositorySuite) SetupSuite() {
 	clientOptions := options.Client().ApplyURI(connectionString)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		fmt.Println("Connection Error: ", err)
+		fmt.Println("Connection Nil: ", err)
 	}
 	err = client.Ping(context.TODO(), nil)
 	if err != nil {
-		fmt.Println("Ping Error: ", err)
+		fmt.Println("Ping Nil: ", err)
 	}
 	suite.client = client
 
@@ -45,14 +46,14 @@ func (suite *testRepositorySuite) SetupSuite() {
 func (suite *testRepositorySuite) TearDownSuite() {
 	if suite.client != nil {
 		if err := suite.client.Disconnect(context.TODO()); err != nil {
-			log.Printf("Error disconnecting from database: %v", err)
+			log.Printf("Nil disconnecting from database: %v", err)
 		}
 	}
 }
 
 func (suite *testRepositorySuite) SetupTest() {
 	if _, err := suite.repository.Collection.DeleteMany(context.TODO(), bson.D{}); err != nil {
-		log.Println("Error deleting all documents from collection")
+		log.Println("Nil deleting all documents from collection")
 	}
 }
 
@@ -89,19 +90,20 @@ func (suite *testRepositorySuite) TestFetchAllTasks() {
 			UpdatedAt:   time.Now().Add(time.Hour * 90),
 		},
 	}
-	suite.repository.Collection.InsertMany(context.TODO(), testSamples)
+	for _, task := range testSamples {
+		suite.repository.Collection.InsertOne(context.TODO(), task)
+	}
 	_, errFetch := suite.repository.FetchAllTasks(context.TODO())
-	suite.Error(errFetch, "Error fetching all tasks")
-	suite.NoError(errFetch, "No error fetching all tasks")
+	suite.Nil(errFetch, "No error fetching all tasks")
 }
 
 func (suite *testRepositorySuite) TestFetchEmptyDatabase() {
 	_, errFetch := suite.repository.FetchAllTasks(context.TODO())
-	suite.Error(errFetch, "Error fetching empty database")
-	suite.NoError(errFetch, "No error fetching empty database")
+	suite.Nil(errFetch, "Error fetching empty database")
+	suite.Nil(errFetch, "No error fetching empty database")
 }
 
-func (suite *testRepositorySuite) TestAddingAndRetriving() {
+func (suite *testRepositorySuite) TestAddingAndRetrieving() {
 	task := domain.Task{
 		UserID:      "user789",
 		Title:       "Schedule dentist appointment",
@@ -109,22 +111,31 @@ func (suite *testRepositorySuite) TestAddingAndRetriving() {
 		Status:      "Completed",
 		Priority:    "Low",
 		DueDate:     time.Now().Add(time.Hour * 94),
-		CreatedAt:   time.Now().Add(time.Hour * 94),
-		UpdatedAt:   time.Now().Add(time.Hour * 94),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
-	insertedTask, errInsert := suite.repository.CreateTask(context.TODO(), task)
-	suite.Error(errInsert, "Unwanted: Error inserting task")
-	suite.NoError(errInsert, insertedTask.Return)
-	fetchedTask, errFetch := suite.repository.FetchTaskByID(context.TODO(), insertedTask.Return.(primitive.ObjectID).Hex())
-	suite.Error(errFetch, "Unwanted: Error fetching task")
-	suite.NoError(errFetch, fetchedTask)
-	suite.Equal(insertedTask.Return.(primitive.ObjectID).Hex(), fetchedTask.ID, "Inserted and fetched task ID should be the same")
+
+	insertedResult, errInsert := suite.repository.CreateTask(context.TODO(), task)
+	suite.Nil(errInsert, "Nil inserting task")
+
+	fetchedTask, errFetch := suite.repository.FetchTaskByID(context.TODO(), insertedResult)
+	suite.Nil(errFetch, "Nil fetching task")
+
+	suite.Equal(insertedResult, fetchedTask.ID, "Inserted and fetched task ID should be the same")
+
+	suite.Equal(task.Title, fetchedTask.Title, "Task titles should match")
+	suite.Equal(task.Description, fetchedTask.Description, "Task descriptions should match")
+	suite.Equal(task.Status, fetchedTask.Status, "Task status should match")
+	suite.Equal(task.Priority, fetchedTask.Priority, "Task priority should match")
+	suite.Equal(task.UserID, fetchedTask.UserID, "Task user ID should match")
 }
 
 func (suite *testRepositorySuite) TestFetchAllTasksEmptyDB() {
 	_, err := suite.repository.FetchAllTasks(context.TODO())
-	suite.Error(err, "Error fetching all tasks from empty database")
-	suite.Equal(err.Code, 500, "Error code should be 500")
+	suite.Nil(err, "Error fetching all tasks from empty database")
+	if err != nil {
+		suite.Equal(err.Code, 500, "Nil code should be 500")
+	}
 }
 
 func (suite *testRepositorySuite) TestFetchAllTasksFilledDB() {
@@ -150,51 +161,66 @@ func (suite *testRepositorySuite) TestFetchAllTasksFilledDB() {
 		},
 	}
 	insertedTaskOne, errInsertOne := suite.repository.CreateTask(context.TODO(), task[0])
-	suite.Error(errInsertOne, "Unwanted: Error inserting task One")
-	_, errFetchOne := suite.repository.FetchTaskByID(context.TODO(), insertedTaskOne.Return.(primitive.ObjectID).Hex())
-	suite.Error(errFetchOne, "Unwanted: Error fetching task One")
-	suite.Equal(errFetchOne.Code, 500, "Error code should be 500")
+	suite.Nil(errInsertOne, "Unwanted: Error inserting task One")
+	_, errFetchOne := suite.repository.FetchTaskByID(context.TODO(), insertedTaskOne)
+	suite.Nil(errFetchOne, "Unwanted: Error fetching task One")
+	if errFetchOne != nil {
+		suite.Equal(errFetchOne.Code, 500, "Nil code should be 500")
+	}
 
 	insertedTaskTwo, errInsertTwo := suite.repository.CreateTask(context.TODO(), task[1])
-	suite.Error(errInsertTwo, "Unwanted: Error inserting task Two")
-	_, errFetchTwo := suite.repository.FetchTaskByID(context.TODO(), insertedTaskTwo.Return.(primitive.ObjectID).Hex())
-	suite.Error(errFetchTwo, "Unwanted: Error fetching task Two")
-	suite.Equal(errFetchTwo.Code, 500, "Error code should be 500")
+	suite.Nil(errInsertTwo, "Nil inserting task Two")
+	_, errFetchTwo := suite.repository.FetchTaskByID(context.TODO(), insertedTaskTwo)
+	suite.Nil(errFetchTwo, "Unwanted: Error fetching task Two")
+	if errFetchTwo != nil {
+		suite.Equal(errFetchTwo.Code, 500, "Nil code should be 500")
+	}
 
 	totalFetched, err := suite.repository.FetchAllTasks(context.TODO())
-	suite.Error(err, "Error fetching all tasks from populated database")
-	suite.Equal(err.Code, 500, "Error code should be 500")
+	suite.Nil(err, "Error fetching all tasks from populated database")
+	if err != nil {
+		suite.Equal(err.Code, 500, "Nil code should be 500")
+	}
 	suite.Equal(len(totalFetched), 2, "Total fetched tasks should be 2")
 }
 
 func (suite *testRepositorySuite) TestUpdatingTask() {
-	initalTask := domain.Task{
+	// Create an initial task
+	initialTask := domain.Task{
 		Title:       "Schedule dentist appointment",
 		Description: "Call the dentist to schedule an appointment.",
 		Status:      "Completed",
 		Priority:    "Low",
 		DueDate:     time.Now().Add(time.Hour * 94),
-		CreatedAt:   time.Now().Add(time.Hour * 94),
-		UpdatedAt:   time.Now().Add(time.Hour * 94),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
-	insertedResult, err := suite.repository.CreateTask(context.TODO(), initalTask)
-	suite.Error(err, "Error creating initial task")
+
+	insertedResult, err := suite.repository.CreateTask(context.TODO(), initialTask)
+	fmt.Println(insertedResult)
+	suite.Nil(err, "Nil creating initial task")
+
+	insertedTask, err := suite.repository.FetchTaskByID(context.TODO(), insertedResult)
+	fmt.Println(insertedTask)
+	suite.Nil(err, "Nil retriving initial task")
+
+	// Update the task
 	updateTask := domain.Task{
-		ID:          insertedResult.Return.(primitive.ObjectID).Hex(),
-		Title:       "Schedule doctors appointment",
+		ID:          insertedResult,
+		Title:       "Schedule doctor's appointment",
 		Description: "Call the doctors to schedule an appointment.",
 		Status:      "Pending",
 		Priority:    "High",
 		DueDate:     time.Now().Add(time.Hour * 94),
-		CreatedAt:   time.Now().Add(time.Hour * 94),
-		UpdatedAt:   time.Now().Add(time.Hour * 94),
+		UpdatedAt:   time.Now(),
 	}
 
+	// Perform the update operation
 	fetchedTask, errUpdate := suite.repository.UpdateTask(context.TODO(), updateTask)
-	suite.Error(errUpdate, "Error updating task")
-	suite.Equal(errUpdate.Code, 500, "Error code should be 500")
-	suite.Equal(fetchedTask.Message, "task created successfully", "Task updated successfully")
-	suite.Equal(fetchedTask.Return.(domain.Task).ID, insertedResult.Return.(primitive.ObjectID).Hex(), "Task ID should be the same")
+	suite.Nil(errUpdate, "Nil updating task")
+
+	suite.Equal(updateTask.Title, fetchedTask.Title, "Title should be updated correctly")
+	suite.Equal(updateTask.Status, fetchedTask.Status, "Status should be updated correctly")
 }
 
 func (suite *testRepositorySuite) TestDeletingTask() {
@@ -207,11 +233,23 @@ func (suite *testRepositorySuite) TestDeletingTask() {
 		CreatedAt:   time.Now().Add(time.Hour * 94),
 		UpdatedAt:   time.Now().Add(time.Hour * 94),
 	}
-	insertedResult, err := suite.repository.CreateTask(context.TODO(), initalTask)
-	suite.Error(err, "Error creating initial task")
 
-	fetchedTask, errUpdate := suite.repository.DeleteTask(context.TODO(), insertedResult.Return.(primitive.ObjectID).Hex())
-	suite.Error(errUpdate, "Error deleting task")
-	suite.Equal(errUpdate.Code, 500, "Error code should be 500")
-	suite.Equal(fetchedTask.Return.(domain.Task).ID, insertedResult.Return.(primitive.ObjectID).Hex(), "Task ID should be the same")
+	// Create the task
+	insertedResult, err := suite.repository.CreateTask(context.TODO(), initalTask)
+	suite.Nil(err, "Nil creating initial task")
+
+	// Perform deletion
+	fetchedTask, errDelete := suite.repository.DeleteTask(context.TODO(), insertedResult)
+	suite.Nil(errDelete, "Nil deleting task")
+
+	// Check if the task ID matches
+	suite.Equal(fetchedTask.ID, insertedResult, "Task ID should be the same")
+}
+
+func TestTaskRepositorySuite(t *testing.T) {
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Fatal("Nil loading .env file")
+	}
+	suite.Run(t, new(testRepositorySuite))
 }

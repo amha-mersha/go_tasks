@@ -57,37 +57,53 @@ func (taskRepo *TaskRepository) FetchTaskByID(cxt context.Context, ID string) (d
 	return fetchedTask, nil
 }
 
-func (taskRepo *TaskRepository) CreateTask(cxt context.Context, newTask domain.Task) (domain.TaskSuccess, *domain.TaskError) {
+func (taskRepo *TaskRepository) CreateTask(cxt context.Context, newTask domain.Task) (string, *domain.TaskError) {
 	newTask.ID = ""
 	insertedTask, err := taskRepo.Collection.InsertOne(cxt, newTask)
 	if err != nil {
-		return domain.TaskSuccess{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return "", &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
-	return domain.TaskSuccess{Message: CREATED_SUCCESSFULLY, Return: insertedTask}, nil
+	result, ok := insertedTask.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return "", &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
+	}
+	return result.Hex(), nil
 }
 
-func (taskRepo *TaskRepository) UpdateTask(cxt context.Context, updateTask domain.Task) (domain.TaskSuccess, *domain.TaskError) {
-	filter := bson.D{{"_id", updateTask.ID}}
-	opts := options.FindOneAndUpdate().SetUpsert(false).SetReturnDocument(options.After)
-	var returnedtask domain.Task
-	err := taskRepo.Collection.FindOneAndUpdate(cxt, filter, updateTask, opts).Decode(&returnedtask)
+func (taskRepo *TaskRepository) UpdateTask(cxt context.Context, updateTask domain.Task) (domain.Task, *domain.TaskError) {
+	objectID, err := primitive.ObjectIDFromHex(updateTask.ID)
 	if err != nil {
-		return domain.TaskSuccess{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return domain.Task{}, &domain.TaskError{Message: "Invalid ID format", Code: http.StatusBadRequest}
 	}
-	return domain.TaskSuccess{Message: CREATED_SUCCESSFULLY, Return: returnedtask}, nil
-
+	filter := bson.D{{"_id", objectID}}
+	opts := options.FindOneAndUpdate().SetUpsert(false).SetReturnDocument(options.After)
+	inserteTask := domain.Task{
+		Title:       updateTask.Title,
+		Description: updateTask.Description,
+		Status:      updateTask.Status,
+		DueDate:     updateTask.DueDate,
+		UserID:      updateTask.UserID,
+		Priority:    updateTask.Priority,
+	}
+	update := bson.D{{"$set", inserteTask}}
+	var returnedtask domain.Task
+	err = taskRepo.Collection.FindOneAndUpdate(cxt, filter, update, opts).Decode(&returnedtask)
+	if err != nil {
+		return domain.Task{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
+	}
+	return returnedtask, nil
 }
 
-func (taskRepo *TaskRepository) DeleteTask(cxt context.Context, ID string) (domain.TaskSuccess, *domain.TaskError) {
+func (taskRepo *TaskRepository) DeleteTask(cxt context.Context, ID string) (domain.Task, *domain.TaskError) {
 	taskID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
-		return domain.TaskSuccess{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return domain.Task{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
 	filter := bson.D{{"_id", taskID}}
 	var deletedTask domain.Task
 	err = taskRepo.Collection.FindOneAndDelete(cxt, filter).Decode(&deletedTask)
 	if err != nil {
-		return domain.TaskSuccess{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return domain.Task{}, &domain.TaskError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
-	return domain.TaskSuccess{Message: "task deleted successfully", Return: deletedTask}, nil
+	return deletedTask, nil
 }
