@@ -3,12 +3,9 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"os"
-	"strconv"
-	"time"
 
-	domain "github.com/amha-mersha/go_tasks/go-backend-clean-architecture/domains"
-	"github.com/amha-mersha/go_tasks/go-backend-clean-architecture/infrastructure"
+	domain "github.com/amha-mersha/go_tasks/test-go-backend-task-manager/domains"
+	"github.com/amha-mersha/go_tasks/test-go-backend-task-manager/infrastructure"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
@@ -178,24 +175,9 @@ func (controller *Controller) PostUserLogin(cxt *gin.Context) {
 		}
 		return
 	}
-	result, err := controller.UserUsecase.GetUserByUsername(cxt, loggingUser.Username)
+	token, err := controller.UserUsecase.LoginUser(cxt, loggingUser)
 	if err != nil {
 		cxt.JSON(err.Code, gin.H{"Error": err.Error()})
-		return
-	}
-
-	if err := infrastructure.ValidatePassword(result.Password, loggingUser.Password); result.Role != loggingUser.Role || err != nil {
-		cxt.JSON(http.StatusUnauthorized, gin.H{"Error": "Invalid credentials"})
-		return
-	}
-	timeDurationEnv, errDuration := strconv.ParseInt(os.Getenv("SIGNITURE_TIME_DURATION"), 10, 64)
-	if errDuration != nil {
-		cxt.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
-		return
-	}
-	token, errToken := infrastructure.CreateJWTToken(result.Username, result.Role, time.Duration(timeDurationEnv)*time.Second)
-	if errToken != nil {
-		cxt.JSON(http.StatusInternalServerError, gin.H{"Error": errToken.Error()})
 		return
 	}
 	cxt.JSON(http.StatusOK, gin.H{"token": token})

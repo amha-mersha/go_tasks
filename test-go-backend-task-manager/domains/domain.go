@@ -73,6 +73,7 @@ type UserUsecase interface {
 	CreateUser(cxt context.Context, newUser User) (string, *UserError)
 	UpdateUser(cxt context.Context, userUpdate User) (User, *UserError)
 	DeleteUser(cxt context.Context, authority User, deleteID string) (User, *UserError)
+	LoginUser(cxt context.Context, loggingUser User) (string, *UserError)
 }
 
 // task repository struct

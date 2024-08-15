@@ -12,21 +12,18 @@ import (
 )
 
 type UserRepository struct {
-	userDatabase   *mongo.Database
-	userCollection string
+	Collection *mongo.Collection
 }
 
-func NewUserRepository(database *mongo.Database, collection string) UserRepository {
+func NewUserRepository(collection *mongo.Collection) UserRepository {
 	return UserRepository{
-		userDatabase:   database,
-		userCollection: collection,
+		Collection: collection,
 	}
 }
 
 func (userRepo *UserRepository) FetchAllUsers(cxt context.Context) ([]domain.User, *domain.UserError) {
-	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	filter := bson.D{{}}
-	cursor, err := collection.Find(cxt, filter)
+	cursor, err := userRepo.Collection.Find(cxt, filter)
 	if err != nil {
 		return []domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
@@ -40,14 +37,13 @@ func (userRepo *UserRepository) FetchAllUsers(cxt context.Context) ([]domain.Use
 }
 
 func (userRepo *UserRepository) FetchUserByID(cxt context.Context, ID string) (domain.User, *domain.UserError) {
-	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	taskID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
 		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
 	filter := bson.D{{"_id", taskID}}
 	var retrivedUser domain.User
-	err = collection.FindOne(cxt, filter).Decode(&retrivedUser)
+	err = userRepo.Collection.FindOne(cxt, filter).Decode(&retrivedUser)
 	if err != nil {
 		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
@@ -56,10 +52,9 @@ func (userRepo *UserRepository) FetchUserByID(cxt context.Context, ID string) (d
 }
 
 func (userRepo *UserRepository) FetchUserByUsername(cxt context.Context, username string) (domain.User, *domain.UserError) {
-	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	filter := bson.D{{"username", username}}
 	var retrivedUser domain.User
-	err := collection.FindOne(cxt, filter).Decode(&retrivedUser)
+	err := userRepo.Collection.FindOne(cxt, filter).Decode(&retrivedUser)
 	if err != nil {
 		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
@@ -68,8 +63,7 @@ func (userRepo *UserRepository) FetchUserByUsername(cxt context.Context, usernam
 }
 
 func (userRepo *UserRepository) FetchUserCount(cxt context.Context) (int, *domain.UserError) {
-	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
-	usersCount, err := collection.EstimatedDocumentCount(cxt)
+	usersCount, err := userRepo.Collection.EstimatedDocumentCount(cxt)
 	if err != nil {
 		return 0, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
@@ -77,8 +71,7 @@ func (userRepo *UserRepository) FetchUserCount(cxt context.Context) (int, *domai
 }
 
 func (userRepo *UserRepository) CreateUser(cxt context.Context, newUser domain.User) (string, *domain.UserError) {
-	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
-	createdUser, err := collection.InsertOne(cxt, newUser)
+	createdUser, err := userRepo.Collection.InsertOne(cxt, newUser)
 	if err != nil {
 		return "", &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
@@ -89,12 +82,20 @@ func (userRepo *UserRepository) CreateUser(cxt context.Context, newUser domain.U
 	return insertedID.Hex(), nil
 }
 
-func (userRepo *UserRepository) UpdateUser(cxt context.Context, updateTask domain.User) (domain.User, *domain.UserError) {
-	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
-	filter := bson.D{{"_id", updateTask.ID}}
+func (userRepo *UserRepository) UpdateUser(cxt context.Context, updateUser domain.User) (domain.User, *domain.UserError) {
+	objectID, err := primitive.ObjectIDFromHex(updateUser.ID)
+	if err != nil {
+		return domain.User{}, &domain.UserError{Message: "Invalid ID format", Code: http.StatusBadRequest}
+	}
+	filter := bson.D{{"_id", objectID}}
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	inserteUser := domain.User{
+		Username: updateUser.Username,
+		Role:     updateUser.Role,
+		Password: updateUser.Password,
+	}
 	var returnedUser domain.User
-	err := collection.FindOneAndUpdate(cxt, filter, bson.D{{"$set", updateTask}}, opts).Decode(&returnedUser)
+	err = userRepo.Collection.FindOneAndUpdate(cxt, filter, bson.D{{"$set", inserteUser}}, opts).Decode(&returnedUser)
 	if err != nil {
 		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
@@ -102,13 +103,12 @@ func (userRepo *UserRepository) UpdateUser(cxt context.Context, updateTask domai
 }
 
 func (userRepo *UserRepository) DeleteUser(cxt context.Context, ID string) (domain.User, *domain.UserError) {
-	collection := userRepo.userDatabase.Collection(userRepo.userCollection)
 	taskID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
 		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
 	var returnedUser domain.User
-	err = collection.FindOneAndDelete(cxt, bson.D{{"_id", taskID}}).Decode(&returnedUser)
+	err = userRepo.Collection.FindOneAndDelete(cxt, bson.D{{"_id", taskID}}).Decode(&returnedUser)
 	if err != nil {
 		return domain.User{}, &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}

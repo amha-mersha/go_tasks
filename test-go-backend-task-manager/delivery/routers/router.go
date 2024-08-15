@@ -19,12 +19,18 @@ func Run(port int, database mongo.Database, timeout time.Duration, router *gin.E
 	private.Use(infrastructure.AuthMiddleWare("admin"))
 	public.Use(infrastructure.AuthMiddleWare("user", "admin"))
 	open := router.Group("/api/v1")
+	CollectionUser := database.Collection(usercollection)
+	CollectionTask := database.Collection(taskcollection)
+	err := infrastructure.EstablisUniqueUsernameIndex(CollectionUser, "username")
+	if err != nil {
+		log.Println("Error", err)
+	}
 
-	taskRepository := repositorie.NewTaskRepository(&database, taskcollection)
+	taskRepository := repositorie.NewTaskRepository(CollectionTask)
 	taskUsecase := usecases.NewTaskUsecase(&taskRepository, time.Second*5)
-	userRepository := repositorie.NewUserRepository(&database, usercollection)
+	userRepository := repositorie.NewUserRepository(CollectionUser)
 	userUsecase := usecases.NewUserUsecase(&userRepository, time.Second*5)
-	controller := controllers.NewController(&taskUsecase, userUsecase)
+	controller := controllers.NewController(&taskUsecase, &userUsecase)
 
 	private.POST("/task", controller.PostTask)
 	private.PUT("/task/:id", controller.UpdateTask)
