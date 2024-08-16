@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	domain "github.com/amha-mersha/go_tasks/test-go-backend-task-manager/domains"
-	"github.com/amha-mersha/go_tasks/test-go-backend-task-manager/infrastructure"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
 )
@@ -45,31 +44,44 @@ func (controller *Controller) GetTaskByID(cxt *gin.Context) {
 func (controller *Controller) UpdateTask(cxt *gin.Context) {
 	var updatedTask domain.Task
 	if err := cxt.ShouldBindJSON(&updatedTask); err != nil {
-		switch e := err.(type) {
+		switch err.(type) {
 		case *json.SyntaxError:
 			cxt.JSON(http.StatusBadRequest, gin.H{"Error": "Malformed JSON"})
 		case *json.UnmarshalTypeError:
 			cxt.JSON(http.StatusBadRequest, gin.H{"Error": "Mismatched format"})
-		case validator.ValidationErrors:
-			missingRequireds := []string{}
-			for _, fieldError := range e {
-				missingRequireds = append(missingRequireds, fieldError.Field())
-			}
-			cxt.JSON(http.StatusBadRequest, gin.H{"Error": "Missing required fields", "Missing": missingRequireds})
+		default:
+			cxt.JSON(http.StatusBadRequest, gin.H{"Error": "Invalid request payload"})
 		}
 		return
 	}
+
+	validate := validator.New()
+	if err := validate.Struct(updatedTask); err != nil {
+		if fieldErrors, ok := err.(validator.ValidationErrors); ok {
+			missingFields := []string{}
+			for _, fieldError := range fieldErrors {
+				missingFields = append(missingFields, fieldError.Field())
+			}
+			cxt.JSON(http.StatusBadRequest, gin.H{"Error": "Missing required fields", "Missing": missingFields})
+		} else {
+			cxt.JSON(http.StatusBadRequest, gin.H{"Error": "Validation error"})
+		}
+		return
+	}
+
 	returnedTask, err := controller.TaskUsecase.UpdateTask(cxt, updatedTask)
 	if err != nil {
 		cxt.JSON(err.Code, gin.H{"Error": err.Error()})
 		return
 	}
+
 	cxt.JSON(http.StatusOK, returnedTask)
 }
 
 func (controller *Controller) DeleteTask(cxt *gin.Context) {
 	taskID := cxt.Param("id")
-	deletedTask, err := controller.TaskUsecase.DeleteTask(cxt, taskID)
+	authorityID := cxt.Param("userid")
+	deletedTask, err := controller.TaskUsecase.DeleteTask(cxt, taskID, authorityID)
 	if err != nil {
 		cxt.JSON(err.Code, gin.H{"Error": err.Error()})
 		return
@@ -144,12 +156,6 @@ func (controller *Controller) PostUserRegister(cxt *gin.Context) {
 		}
 		return
 	}
-	hashed, errhash := infrastructure.HashPassword(registeringUser.Password)
-	if errhash != nil {
-		cxt.JSON(http.StatusInternalServerError, gin.H{"Error": errhash.Error()})
-		return
-	}
-	registeringUser.Password = hashed
 	result, err := controller.UserUsecase.CreateUser(cxt, registeringUser)
 	if err != nil {
 		cxt.JSON(err.Code, gin.H{"Error": err.Error()})

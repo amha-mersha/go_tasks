@@ -33,8 +33,8 @@ func Run(port int, database mongo.Database, timeout time.Duration, router *gin.E
 	controller := controllers.NewController(&taskUsecase, &userUsecase)
 
 	private.POST("/task", controller.PostTask)
-	private.PUT("/task/:id", controller.UpdateTask)
-	private.DELETE("/task/:id", controller.DeleteTask)
+	private.PUT("/task", controller.UpdateTask)
+	private.DELETE("/task/:id/:userid", controller.DeleteTask)
 	private.POST("/user/assign", controller.PostUserAssign)
 
 	open.POST("/user/register", controller.PostUserRegister)

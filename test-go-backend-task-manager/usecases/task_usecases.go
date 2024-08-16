@@ -51,7 +51,7 @@ func (taskUC *taskUseCase) UpdateTask(cxt context.Context, updateTask domain.Tas
 	return taskUC.taskRepository.UpdateTask(context, updateTask)
 }
 
-func (taskUC *taskUseCase) DeleteTask(cxt context.Context, taskID string, authority domain.User) (domain.Task, *domain.TaskError) {
+func (taskUC *taskUseCase) DeleteTask(cxt context.Context, taskID string, authorityID string) (domain.Task, *domain.TaskError) {
 	context, cancel := context.WithTimeout(cxt, taskUC.contextTimeout)
 	defer cancel()
 
@@ -60,7 +60,7 @@ func (taskUC *taskUseCase) DeleteTask(cxt context.Context, taskID string, author
 		return domain.Task{}, errFetch
 	}
 
-	if authority.ID != fetchedTask.UserID {
+	if authorityID != fetchedTask.UserID {
 		return domain.Task{}, &domain.TaskError{Message: "You are not authorized to delete this task", Code: 403}
 	}
 

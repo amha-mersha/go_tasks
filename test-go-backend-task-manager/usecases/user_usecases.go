@@ -57,6 +57,11 @@ func (userUC userUsercase) CreateUser(cxt context.Context, newUser domain.User) 
 	} else {
 		newUser.Role = "user"
 	}
+	hashed, errhash := infrastructure.HashPassword(newUser.Password)
+	if errhash != nil {
+		return "", &domain.UserError{Message: errhash.Error(), Code: http.StatusInternalServerError}
+	}
+	newUser.Password = hashed
 	inserted, err := userUC.userRepository.CreateUser(context, newUser)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
@@ -104,7 +109,6 @@ func (userUC userUsercase) LoginUser(cxt context.Context, loggingUser domain.Use
 	if result.Role != loggingUser.Role {
 		return "", &domain.UserError{Message: "Role mismatch", Code: http.StatusUnauthorized}
 	}
-
 	timeDurationEnv, errDuration := strconv.ParseInt(os.Getenv("SIGNITURE_TIME_DURATION"), 10, 64)
 	if errDuration != nil {
 		return "", &domain.UserError{Message: errDuration.Error(), Code: http.StatusInternalServerError}

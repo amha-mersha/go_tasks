@@ -44,9 +44,9 @@ func (_m *TaskUsecase) CreateTask(cxt context.Context, newTask domain.Task) (str
 	return r0, r1
 }
 
-// DeleteTask provides a mock function with given fields: cxt, taskID
-func (_m *TaskUsecase) DeleteTask(cxt context.Context, taskID string) (domain.Task, *domain.TaskError) {
-	ret := _m.Called(cxt, taskID)
+// DeleteTask provides a mock function with given fields: cxt, taskID, authorityID
+func (_m *TaskUsecase) DeleteTask(cxt context.Context, taskID string, authorityID string) (domain.Task, *domain.TaskError) {
+	ret := _m.Called(cxt, taskID, authorityID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteTask")
@@ -54,17 +54,17 @@ func (_m *TaskUsecase) DeleteTask(cxt context.Context, taskID string) (domain.Ta
 
 	var r0 domain.Task
 	var r1 *domain.TaskError
-	if rf, ok := ret.Get(0).(func(context.Context, string) (domain.Task, *domain.TaskError)); ok {
-		return rf(cxt, taskID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (domain.Task, *domain.TaskError)); ok {
+		return rf(cxt, taskID, authorityID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) domain.Task); ok {
-		r0 = rf(cxt, taskID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) domain.Task); ok {
+		r0 = rf(cxt, taskID, authorityID)
 	} else {
 		r0 = ret.Get(0).(domain.Task)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) *domain.TaskError); ok {
-		r1 = rf(cxt, taskID)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) *domain.TaskError); ok {
+		r1 = rf(cxt, taskID, authorityID)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*domain.TaskError)

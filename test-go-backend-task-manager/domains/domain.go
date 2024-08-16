@@ -8,8 +8,8 @@ import (
 // task struc
 type Task struct {
 	ID          string    `json:"id,omitempty" bson:"_id,omitempty"`
-	UserID      string    `json:"userID" bson:"userID"`
-	Title       string    `json:"title" bson:"title"`
+	UserID      string    `json:"userID" bson:"userID" validate:"required"`
+	Title       string    `json:"title" bson:"title"  validate:"required"`
 	Description string    `json:"description,omitempty" bson:"description,omitempty"`
 	Status      string    `json:"status,omitempty" bson:"status,omitempty"`
 	Priority    string    `json:"priority,omitempty" bson:"priority,omitempty"`
@@ -62,7 +62,7 @@ type TaskUsecase interface {
 	GetTaskByID(cxt context.Context, taskID string) (Task, *TaskError)
 	CreateTask(cxt context.Context, newTask Task) (string, *TaskError)
 	UpdateTask(cxt context.Context, updateTask Task) (Task, *TaskError)
-	DeleteTask(cxt context.Context, taskID string, authority User) (Task, *TaskError)
+	DeleteTask(cxt context.Context, taskID string, authorityID string) (Task, *TaskError)
 }
 
 // users use case interface
