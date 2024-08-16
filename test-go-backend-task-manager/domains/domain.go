@@ -62,7 +62,7 @@ type TaskUsecase interface {
 	GetTaskByID(cxt context.Context, taskID string) (Task, *TaskError)
 	CreateTask(cxt context.Context, newTask Task) (string, *TaskError)
 	UpdateTask(cxt context.Context, updateTask Task) (Task, *TaskError)
-	DeleteTask(cxt context.Context, taskID string) (Task, *TaskError)
+	DeleteTask(cxt context.Context, taskID string, authority User) (Task, *TaskError)
 }
 
 // users use case interface
