@@ -66,7 +66,6 @@ func (userUC userUsercase) CreateUser(cxt context.Context, newUser domain.User) 
 		}
 	}
 	return inserted, nil
-
 }
 
 func (userUC userUsercase) UpdateUser(cxt context.Context, updateUser domain.User) (domain.User, *domain.UserError) {
@@ -85,6 +84,9 @@ func (userUC userUsercase) DeleteUser(cxt context.Context, authority domain.User
 	if fetchedAuthority.Role != "admin" {
 		return domain.User{}, &domain.UserError{Message: "Unauthorized to make this update", Code: http.StatusUnauthorized}
 	}
+	if fetchedAuthority.ID == deleteID {
+		return domain.User{}, &domain.UserError{Message: "Unauthorized to delete yourself", Code: http.StatusUnauthorized}
+	}
 	return userUC.userRepository.DeleteUser(context, deleteID)
 }
 
@@ -95,16 +97,21 @@ func (userUC userUsercase) LoginUser(cxt context.Context, loggingUser domain.Use
 	if err != nil {
 		return "", &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
 	}
-	if err := infrastructure.ValidatePassword(result.Password, loggingUser.Password); result.Role != loggingUser.Role || err != nil {
-		return "", &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+	if err := infrastructure.ValidatePassword(result.Password, loggingUser.Password); err != nil {
+		return "", &domain.UserError{Message: "Password validation failed", Code: http.StatusUnauthorized}
 	}
+
+	if result.Role != loggingUser.Role {
+		return "", &domain.UserError{Message: "Role mismatch", Code: http.StatusUnauthorized}
+	}
+
 	timeDurationEnv, errDuration := strconv.ParseInt(os.Getenv("SIGNITURE_TIME_DURATION"), 10, 64)
 	if errDuration != nil {
-		return "", &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return "", &domain.UserError{Message: errDuration.Error(), Code: http.StatusInternalServerError}
 	}
 	token, errToken := infrastructure.CreateJWTToken(result.Username, result.Role, time.Duration(timeDurationEnv)*time.Second)
 	if errToken != nil {
-		return "", &domain.UserError{Message: err.Error(), Code: http.StatusInternalServerError}
+		return "", &domain.UserError{Message: errToken.Error(), Code: http.StatusInternalServerError}
 	}
 	return token, nil
 }
