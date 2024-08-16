@@ -20,17 +20,17 @@ jobs:
       - name: Test
         run: cd go_tasks/test-go-backend-task-manager && go test -v ./...
 
-      # - name: Test Controllers
-      #   run: go test -v ./Tests/controller_test.go
+      - name: Test Controllers
+        run: go test -v ./test-go-backend-task-manager/Tests/controller_test.go
   
-      # - name: Test JWT Service
-      #   run: go test -v ./Tests/jwt_service_test.go
+      - name: Test JWT Service
+        run: go test -v ./test-go-backend-task-manager/Tests/jwt_service_test.go
   
-      # - name: Test Password Service
-      #   run: go test -v ./Tests/password_service_test.go
+      - name: Test Password Service
+        run: go test -v ./test-go-backend-task-manager/Tests/password_service_test.go
   
-      # - name: Test Task Usecase
-      #   run: go test -v ./Tests/task_usecase_test.go
+      - name: Test Task Usecase
+        run: go test -v ./test-go-backend-task-manager/Tests/task_usecase_test.go
   
-      # - name: Test User Usecase
-      #   run: go test -v ./Tests/user_usecase_test.go
+      - name: Test User Usecase
+        run: go test -v ./test-go-backend-task-manager/Tests/user_usecase_test.go
