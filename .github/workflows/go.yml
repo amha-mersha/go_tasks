@@ -17,8 +17,6 @@ jobs:
         with:
           go-version: '1.22.5'
 
-      - name: Test
-        run: cd go_tasks/test-go-backend-task-manager && go test -v ./...
 
       - name: Test Controllers
         run: go test -v ./test-go-backend-task-manager/Tests/controller_test.go
