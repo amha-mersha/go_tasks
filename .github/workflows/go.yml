@@ -10,26 +10,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22.5'
 
-
-      - name: Test Controllers
-        run: go test -v ./test-go-backend-task-manager/Tests/controller_test.go
-  
-      - name: Test JWT Service
-        run: go test -v ./test-go-backend-task-manager/Tests/jwt_service_test.go
-  
-      - name: Test Password Service
-        run: go test -v ./test-go-backend-task-manager/Tests/password_service_test.go
-  
-      - name: Test Task Usecase
-        run: go test -v ./test-go-backend-task-manager/Tests/task_usecase_test.go
-  
-      - name: Test User Usecase
-        run: go test -v ./test-go-backend-task-manager/Tests/user_usecase_test.go
-        # for the test 
+      - name: Run Tests
+        run: go test -v ./test-go-backend-task-manager/Tests/...
